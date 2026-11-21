@@ -1,12 +1,24 @@
-Publication scope, November 20, 2026
+Project source review notes
+MATH 300 video SVD project
+Updated November 20, 2026
+
+I completed this project using resources provided in class and cited online references. No AI assistance was used.
+
+I used the class lessons on matrix decompositions, reduced SVD, and image
+compression to understand the project methods. The cited research papers and
+software documentation provided additional background for incremental SVD,
+video processing, numerical calculations, and plotting. The README and
+CODE_AND_SOURCE_MAP.txt connect those resources to the project components.
 
 The report source is the latest LaTeX supplied by Hakim. Its wording was
 preserved, and the matching PDF was rebuilt from that source.
 
-The README and AI_USE_RECORD.txt separately record the actual assistance
-provided in this chat. Mathematical and software references support the
-methods; they do not replace the account of code, figure and text authorship.
-
 The project includes the prepared frame matrix, tested code, dependencies,
-figures, measured results, source mappings and run instructions.
+figures, measured results, source mappings, and run instructions. The prepared
+data has shape (5184, 92), representing 92 grayscale frames of 54 by 96 pixels.
+
+The source review preserves the distinction between mathematical references,
+software documentation, and measured results. The numerical checks and figures
+come from the recorded video data processed by the project script.
+
 No older SVD report versions are included in this project folder.

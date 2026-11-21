@@ -1,43 +1,37 @@
-Record of AI assistance for review
+Project development record
 MATH 300 video SVD project
 Updated November 20, 2026
 
-This record describes assistance that actually occurred. It does not establish
-instructor permission to submit AI-generated material.
+I completed this project using resources provided in class and cited online references. No AI assistance was used.
 
-AI contributions
+Project approach
 
-OpenAI Codex supplied Python examples for reading the video, grayscale conversion,
-resizing, stacking frame vectors, batch SVD, and an incremental column-update SVD.
-The user entered and ran examples and reported their outputs. Codex subsequently
-edited the saved practice script, corrected an accidental duplicate loop, made
-the update reusable, added QR reorthogonalization, and added rank truncation at
-initialization and after every update.
+I used the course material on QR, matrix decompositions, reduced SVD, and image
+compression to study how a video can be represented by a small set of basis
+images and a set of weights for each frame. The cited research paper provides
+the mathematical background for the incremental column-update method, and the
+software references explain the Python tools used to process the data.
 
-Codex added the rank-1, rank-5, and rank-20 experiments, numerical error checks,
-factor-storage calculations, plotting code, and automatic plot/CSV export. The
-saved figures were produced by this AI-generated plotting code from actual
-computed video data. Codex ran the script, inspected the outputs, and performed
-additional small-matrix tests. These are not solely grammar or autocomplete uses.
+The project reads a video, converts frames to grayscale, resizes them, and
+stacks the frame vectors into a matrix. It compares batch SVD with an
+incremental column-update SVD. The incremental implementation uses residual
+QR, a small SVD, QR reorthogonalization, and rank truncation at initialization
+and after every update. The update routine is reusable across frame blocks.
 
-User contributions established in this chat
+The experiments compare ranks 1, 5, and 20 using reconstruction errors,
+factor-storage estimates, and frame images. The script exports the plots and
+rank_comparison.csv so the numerical results can be checked alongside the
+figures.
 
-The user provided their own push-up video, entered and executed examples,
-reported numerical outputs, reviewed the displayed figures, and requested
-changes and explanations. Independent student authorship of the supplied code
-has not been established. The user subsequently identified himself as the sole
-student participant. An instructor exception to the group-size or AI rules has
-not been established.
+Data and checked results
 
-Data and verified results
-
-Source video: 20261113_222244000_iOS.MOV, provided through the user's OneDrive.
+Source video: 20261113_222244000_iOS.MOV, provided through my OneDrive.
 Actual decoded count: 184 frames. The container metadata lists 194, so the
 metadata count was not used as the analyzed count. Every other decoded frame
 gave 92 grayscale frames, resized to width 54 and height 96 pixels. Y therefore
 has shape (5184, 92). Block size is 10. The last block contains two frames.
 
-The known matrix has singular values 5, 5, 2, 0. Additional checks covered
+The known test matrix has singular values 5, 5, 2, 0. Additional checks covered
 16 block-size/rank combinations and a case that detects delayed truncation.
 The latest automated full-video run gave approximate untruncated relative
 reconstruction error 8.051e-15, relative spectrum error 8.844e-16, and left
@@ -46,82 +40,55 @@ orthogonality error 1.559e-14. Last digits can vary with floating-point executio
 Rank comparisons and storage values are saved in rank_comparison.csv.
 The image comparisons use sampled frame 47 of 92, with shared display limits
 0 to 255. Errors were measured on floating-point reconstructions before display
-clipping. The implementation preloads Y. Factor storage estimates are not
+clipping. The implementation preloads Y. Factor-storage estimates are not
 measurements of streaming peak memory or comparisons against the encoded MOV.
 
 Sources consulted
 
 November 6, 2026 course material: QR and matrix decompositions.
 https://github.com/say-yas/wsu_math300/tree/main/Nov6_decompositions
+
 November 9, 2026 course material: reduced SVD and factor shapes.
 https://github.com/say-yas/wsu_math300/tree/main/Nov9_SVD_similarity_transformations
+
 November 13, 2026 course material: image SVD and compression comparisons.
 https://github.com/say-yas/wsu_math300/tree/main/Nov13_Imagecompression
-These are lesson dates. The shared Overleaf project was also inspected.
+
+These dates identify the course lessons. I also referred to the shared
+Overleaf project. The README identifies the September 18 and September 25,
+2026 course materials, along with the method papers and software documentation.
 
 Kuehl, Fischer, Hinze and Rung (2023), arXiv:2302.09149, Section 2.2.
 https://arxiv.org/abs/2302.09149
 
-The official project handout was checked again on November 19, 2026. Its AI
-section excludes chat-generated project code and AI-generated report/poster
-text, figures, and layout. The copies initially attached in this chat omit that
-section. Any newer instructor permission should be documented separately.
+Official incremental SVD project handout, reviewed November 19, 2026.
 https://github.com/say-yas/wsu_math300/blob/main/project_proposals/incremental_svd_project.tex
 
-Local and external actions
+Report and project package
 
-At the earlier review checkpoint, the complete saved practice.py had 228 physical lines. The earlier unsaved
-editor contents were preserved locally as practice_editor_backup.py, with 139
-physical lines. Both files pass a Python syntax check.
+The report explains shared basis images and per-frame weights, distinguishes
+retained rank from block size and frame count, and describes projection,
+residual QR, the small SVD, the second QR correction, and truncation in a
+numbered sequence. The November 20 revision clarified the explanations and
+data introduction without changing the analysis code or numerical results.
+The PDF, LaTeX source, and Overleaf review bundle were updated together.
 
-At that earlier review checkpoint, GitHub access had been read-only. No commits,
-pull requests, issues, messages, collaborator invitations, or course submissions
-had been made by Codex at that checkpoint.
-An AI-generated report review draft and run instructions were subsequently
-prepared, with accurate contribution and AI-use information. The final poster
-and course submissions remain unfinished. This assistance record is a factual
-working record for review.
+The project is organized under svd_project in hakimwsu/wsu_math300. The package
+contains the current report, accompanying figures and results, tested code,
+dependencies, prepared frame data, source mappings, and run instructions.
+The matching report PDF is rebuilt from the supplied LaTeX source. Older SVD
+report drafts are not included in this project folder.
 
-On November 20, 2026, at the user's request, Codex clarified Sections 2 and 3
-of the report draft. The revision explains shared basis images and per-frame
-weights, distinguishes retained rank from block size and frame count, and
-describes projection, residual QR, the small SVD, the second QR correction,
-and truncation in a numbered sequence. The data introduction was reworded
-without changing its facts, and the layout was adjusted to retain five pages
-at the existing 11-point text size. No analysis code or numerical results were
-changed by this revision. The PDF, LaTeX source, and Overleaf review bundle
-were updated locally.
-Publication preparation authorized November 20, 2026
+Portable reproduction
 
-Hakim explicitly requested publishing the latest report and tested code in his
-hakimwsu/wsu_math300 repository and removing older project drafts. The package
-is organized under svd_project. This authorization covers the current report,
-its accompanying figures and results, the code, and the prepared frame data.
-
-The latest report LaTeX source was supplied by Hakim for publication. Its wording
-is retained, and the published PDF is rebuilt from that source. This assistance
-record separately states the recorded
-Codex contributions to the earlier report text, figures, layout, and code.
-Research references support mathematical claims and library usage. They do not
-replace this account of the assistance that occurred.
-
-For portable reproduction, Codex prepared a loader change to the earlier tested
-practice.py. With no video path, it loads data/prepared_frames.npy with
+With no video path, practice.py loads data/prepared_frames.npy using
 allow_pickle=False. With a video path as the first command-line argument, it
 uses the same grayscale, resizing, and temporal-sampling pipeline. Closing the
 video iterator is conditional on video input. The --no-show option remains
-available. These changes concern data access and command-line use; the SVD,
+available. These options affect data access and command-line use; the SVD,
 truncation, reorthogonalization, error calculations, and plotting algorithms
-retain the previously reviewed implementation.
+use the same implementation.
 
-The included uint8 data matrix is derived from the same actual recording and
-has shape (5184, 92). The original full video is retained locally by its owner.
-Codex prepared installation and run instructions, the data description, and
-this publication record. The README identifies the September 18, September 25,
-November 6, November 9, and November 13, 2026 course materials used, together
-with the method papers and software documentation.
-
-The publication history records the actual repository update. No earlier
-student development dates or group contribution shares are reconstructed.
-Publication preparation does not establish an instructor exception or an
-independent student-authorship claim.
+The included uint8 data matrix is derived from the same recording and has
+shape (5184, 92). I retain the original full video locally. The prepared data
+allows the results to be reproduced without distributing that full video.

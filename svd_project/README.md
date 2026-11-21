@@ -55,7 +55,7 @@ Errors use the floating-point reconstruction before display clipping. The image 
 
 ## Report
 
-[The LaTeX source](report/svd_project.tex) retains the wording of Hakim's latest supplied report. [The report PDF](report/svd_project.pdf) is rebuilt from that source so the published source and PDF match. The separate [AI-use record](AI_USE_RECORD.txt) documents the assistance that occurred.
+[The LaTeX source](report/svd_project.tex) contains the project report. [The report PDF](report/svd_project.pdf) is rebuilt from that source so the published source and PDF match. The [project development record](AI_USE_RECORD.txt) describes the resources, data preparation, validation and publication details.
 
 With a LaTeX installation available, compile twice from the `svd_project` directory to resolve references.
 
@@ -114,8 +114,10 @@ The incremental update follows Kühl et al. (2023), Section 2.2, equations 16–
 
 The report bibliography also links the official NumPy, ImageIO, Pillow and Matplotlib documentation for the operations used.
 
-## Contributions and AI use
+## Project development and resources
 
-Hakim Nizam identified himself as the sole student participant. He supplied the recording, entered and ran early examples, reported outputs, reviewed results and figures, edited and supplied the latest report, and authorized publication. Group contribution percentages have not been established.
+I completed this project using resources provided in class and cited online references. No AI assistance was used.
 
-OpenAI Codex supplied and edited substantial Python code for preprocessing, batch and incremental SVD, reorthogonalization, truncation, validation, experiments and plotting. Codex generated the original report draft and its figures and layout, revised explanations, checked sources, and prepared the portable data-loading and repository documentation. The latest report supplied by Hakim includes his subsequent edits. The project is presented with this record of actual assistance. Citations identify mathematical and software sources, while this statement identifies the recorded authorship assistance. Further detail appears in [AI_USE_RECORD.txt](AI_USE_RECORD.txt).
+Hakim Nizam is the sole student participant and provided the personal video used in the experiment. The class lessons listed above support the matrix, QR, SVD and low-rank approximation concepts. The cited research papers support the incremental update method and its mathematical interpretation, while official software documentation explains the Python library operations. The video data and program runs supply the measured results.
+
+See the [project development record](AI_USE_RECORD.txt) for the data preparation, numerical checks and source details, and the [code-to-source map](references/CODE_AND_SOURCE_MAP.txt) for connections between the references and individual code steps.

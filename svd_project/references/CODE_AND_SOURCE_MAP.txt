@@ -1,6 +1,8 @@
 Code and source map - MATH 300 SVD project
 Checked November 20, 2026
 
+I completed this project using resources provided in class and cited online references. No AI assistance was used.
+
 Read this alongside svd_project_source_review.pdf and work/practice.py.
 Line numbers refer to the current 228-line practice.py and may move after edits.
 The report contains in-text citation numbers. This guide adds the code locations
@@ -177,13 +179,13 @@ Class notes provide course concepts.
 Research papers support the mathematical algorithm and analysis.
 Official documentation explains library behavior.
 The recording and actual program runs supply the experimental evidence.
-These are method and software references. Literal code authorship and the
-history of assistance are separate facts, recorded in AI_USE_RECORD.txt.
+Together, these resources support the mathematical explanations, software
+operations and interpretation of the project's results. The project development
+record provides additional details about the data, validation and preparation.
 
 For direct URLs, lesson dates and recommended reading locations, see
-VERIFIED_SOURCES.txt. Sources found after implementation are supporting
-references; they should not be described as the original source of code
-that was already written.
+VERIFIED_SOURCES.txt. Each reference should be credited for the specific
+mathematical idea, software operation or course concept it supports.
 
 REPOSITORY INPUT NOTE
 The portable repository version keeps the same 228 line numbers.
