@@ -116,7 +116,9 @@ The report bibliography also links the official NumPy, ImageIO, Pillow and Matpl
 
 ## Project development and resources
 
-I completed this project using resources provided in class and cited online references. No AI assistance was used.
+I completed this project using resources provided in class and cited online references.
+
+**AI-use statement.** I used GitHub Copilot in Visual Studio Code to help define the `U` variables and set up the matrices.
 
 Hakim Nizam is the sole student participant and provided the personal video used in the experiment. The class lessons listed above support the matrix, QR, SVD and low-rank approximation concepts. The cited research papers support the incremental update method and its mathematical interpretation, while official software documentation explains the Python library operations. The video data and program runs supply the measured results.
 

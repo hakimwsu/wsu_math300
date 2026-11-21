@@ -13,6 +13,10 @@ The project compares batch and block incremental SVD for a short grayscale video
 - [Project dependencies](svd_project/requirements.txt)
 - [Code and source guide](svd_project/references/CODE_AND_SOURCE_MAP.txt)
 
+## AI-use statement
+
+I used GitHub Copilot in Visual Studio Code to help define the `U` variables and set up the matrices.
+
 ## Class materials
 
 **MATH300 at Washington State University**
