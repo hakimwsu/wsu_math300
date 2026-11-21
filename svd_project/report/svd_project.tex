@@ -1,0 +1,447 @@
+% Citation review: technical citations and bibliography updated; see SOURCE_REVIEW_NOTES.txt for scope and unresolved wording.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype}
+\usepackage[margin=20mm,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb,graphicx,booktabs,array,caption,xcolor,fancyhdr}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+\usepackage{xurl}
+\graphicspath{{outputs/}{./}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\captionsetup{font=small,labelfont=bf,hypcap=false}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small MATH 300 \(\cdot\) Video compression with the SVD}
+\fancyhead[R]{\small Review draft}
+\fancyfoot[C]{\thepage}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\code}[1]{\texttt{#1}}
+\begin{document}
+
+\begingroup\centering
+{\Large\bfseries Compressing a Push-Up Video with the Incremental SVD}\\[5pt]
+Hakim Nizam \(\cdot\) MATH 300, Fall 2026 \(\cdot\) Revised November 20, 2026
+\par\endgroup
+
+\begingroup\small
+\textbf{Draft status.} This is a final review draft based on measured
+results. The implementation, figures and writing involved researching sources
+assistance. Implementation from previous class notes were also used.~\pageref{sec:class-notes}.
+\endgroup
+
+\section*{1. Question and data}
+
+Consecutive frames share structure that a smaller set of basis images can
+represent. This project tests whether block incremental SVD matches batch
+SVD when all components are kept, and how limiting the retained rank affects
+accuracy. It follows Approach A in the brief \cite{brief} and the
+column-update method of K\"uhl et al.\ \cite{kuhl}.
+
+I provided the personal push-up recording on November~13, 2026
+\cite{video}. The camera is approximately fixed while the body moves.
+The portrait source is \(2160\times3840\) pixels. ImageIO's FFmpeg plugin
+decoded 184 frames, although the metadata listed 194 \cite{imageio};
+the analysis uses the decoded frames.
+
+Keeping every other decoded frame, starting at index zero, gives \(T=92\).
+Pillow converts each to grayscale and resizes it to 54 pixels wide by
+96 high, preserving the aspect ratio \cite{pillow}. Flattening each image
+in the same order \cite{numpy,sep18} gives one column of \(N=5184\) pixel values:
+\[
+Y=[\,y_1\ y_2\ \cdots\ y_{92}\,]\in\mathbb{R}^{5184\times92}.
+\]
+Column \(j\) is one frame; row \(i\) tracks one prepared pixel across time.
+The pixels are unsigned 8-bit values, while factorizations use floating-point
+arithmetic. The mean image is not subtracted.
+
+\section*{2. Batch SVD as a reference}
+
+Batch SVD processes all 92 frame columns
+together. Its reduced factorization is
+\[
+Y=U\Sigma W,\qquad W=V^{\mathsf T}.
+\]
+NumPy returns \(U\), a vector \code{s}, and \(W\) (called \code{vt} in the
+code), with shapes \(5184\times92\), \(92\), and \(92\times92\)
+\cite{numpy,nov9}. Each column \(u_i\) of \(U\) is a shared pixel pattern;
+reshaping it to \(96\times54\) gives a \emph{basis image}, computed from the
+video rather than selected as an original frame. The columns of \(U\) and
+rows of \(W\) are orthonormal: unit length and mutually perpendicular within
+each set.
+
+\textbf{Patterns and weights.}
+\(\Sigma=\operatorname{diag}(s_1,\ldots,s_{92})\) holds nonnegative singular
+values, largest first. They measure the overall strength of the corresponding
+patterns. For frame \(j\), the actual weight on basis image \(i\) is
+\(s_iW_{ij}\). Thus a frame is rebuilt by multiplying each retained basis
+image by its own weight and adding the pixel values \cite{numpy,damle}.
+
+\textbf{What rank changes.} A rank-\(q\) approximation keeps the first \(q\)
+components and reconstructs all 92 frames:
+\begin{equation}
+Y_q=\underbrace{U_q}_{5184\times q}
+    \underbrace{(\Sigma_qW_q)}_{q\times92}
+    \ \in\mathbb{R}^{5184\times92}.
+\label{eq:rankq}
+\end{equation}
+Here \(\Sigma_q\) is \(q\times q\), and \(W_q\) is \(q\times92\).
+At rank 5, every frame uses the same five basis images with its own five
+weights. The output still has 5184 pixel rows and 92 frame columns.
+
+This is the best approximation of rank at most \(q\) in the Frobenius norm,
+which is the square root of the sum of squared matrix entries. Its relative
+error, over every pixel of every prepared frame, is \cite{nov13,damle}
+\begin{equation}
+e_q=\frac{\norm{Y-Y_q}_F}{\norm{Y}_F}
+    =\sqrt{\frac{\sum_{i>q}s_i^2}{\sum_i s_i^2}}.
+\label{eq:tail}
+\end{equation}
+Small discarded singular values therefore mean small relative error when
+their squared sum is small compared with the total. This formula independently
+checks the measured batch error.
+
+\newpage
+\section*{3. Incremental update and numerical stability}
+
+\textbf{Frames per update and patterns retained are different choices.}
+Incremental SVD updates existing factors as new frame columns arrive.
+The block size \(b=10\) means up to ten new frames per update; the final
+block contains two. The retained-rank limit \(q\) controls how many basis
+images are kept. A rank-20 run therefore still processes ten new frames at
+a time. The function starts with an SVD of the first block, then repeats
+the following update \cite{kuhl}.
+
+\textbf{1. Find what the existing basis already explains.}
+Suppose \(t\) frames are represented by \(\widetilde Y=U\Sigma W\), with
+\(r\) currently stored basis images. A new block \(B\) has shape
+\(5184\times b\). Compute
+\[
+M=U^{\mathsf T}B,\qquad P=B-UM,\qquad P=Q_P R_P.
+\]
+The \(r\times b\) matrix \(M\) gives the new frames' weights in the existing
+basis. Thus \(UM\) is the explained part, and the residual \(P\) is what
+remains. Reduced QR writes that residual using perpendicular directions
+\(Q_P\) and coefficients \(R_P\) \cite{nov6,overleaf}.
+
+\textbf{2. Assemble a smaller update problem.}
+Combine the existing basis and residual directions in \(C\), then form
+\begin{equation}
+C=[\,U\ Q_P\,],\qquad
+K=\begin{bmatrix}\Sigma&M\\0&R_P\end{bmatrix},\qquad
+D=\begin{bmatrix}W&0\\0&I_b\end{bmatrix}.
+\label{eq:core}
+\end{equation}
+Here \(K\) combines the old singular values with the new-frame coefficients.
+For these tall frame blocks, residual QR returns \(b\) columns, so \(K\) is
+\((r+b)\times(r+b)\). These factors satisfy
+\begin{equation}
+[\,\widetilde Y\ B\,]=CKD.
+\label{eq:identity}
+\end{equation}
+The matrix \(D\) carries forward the old temporal coefficients and inserts
+the new frames. This identity represents the old approximation plus the new
+data in smaller coordinates \cite{kuhl,brand}.
+
+\textbf{3. Restore a perpendicular basis and compute the small SVD.}
+Similar frames can make \(P\) small or rank deficient. Some QR directions
+may then overlap the old basis. A second QR makes the expanded basis
+orthonormal, also addressing roundoff drift \cite{zhang}:
+\[
+C=Q_C R_C,\qquad
+H=R_CK=\widehat U\,\widehat\Sigma\,\widehat W.
+\]
+\(R_C\) transfers the change of coordinates into \(H\), preserving the
+represented pixels: \(CK=Q_CH\). Omitting \(R_C\) would change the matrix.
+NumPy computes both QR factorizations and the SVD of \(H\) \cite{numpy}.
+
+\textbf{4. Update the basis images and all frame coefficients.}
+The new factors are
+\begin{align}
+U_{\mathrm{new}}&=Q_C\widehat U,&
+\Sigma_{\mathrm{new}}&=\widehat\Sigma,&
+W_{\mathrm{new}}&=\widehat W D.
+\label{eq:update}
+\end{align}
+The right factor keeps old and new frame columns together:
+\[
+W_{\mathrm{new}}
+=\bigl[\,\widehat W_{:,1:r}W\quad
+        \widehat W_{:,r+1:r+b}\,\bigr].
+\]
+The split uses the old value of \(r\). Now \(U_{\rm new}\) contains updated
+basis images, and \(\Sigma_{\rm new}W_{\rm new}\) contains weights for all
+\(t+b\) frames. In \([\,\widetilde Y\ B\,]=Q_CHD\), \(Q_C\) has orthonormal
+columns and \(D\) has orthonormal rows. Hence the small SVD preserves the
+update's nonzero singular values. Without any truncation, this agrees with
+batch SVD up to rounding.
+
+\textbf{5. Optionally truncate, then repeat.}
+The function \code{incremental\_svd} in \path{practice.py} keeps at most \(q\)
+components after initialization and every update, shortening all three
+factors together. A rank-20 run starts with only ten available modes. Once
+\(r=20\), a ten-frame update uses a \(30\times30\) core; the last two-frame
+update uses a \(22\times22\) core. Truncation is optimal for the retained
+approximation plus the new block, but earlier discarded information cannot
+be recovered. Therefore it need not give the globally best rank-\(q\)
+approximation of the original video.
+
+\newpage
+\section*{4. Validation and the full-video result}
+
+\textbf{Known answer.}
+The small test matrix is
+\[
+Z=\begin{bmatrix}
+3&0&4&0&0\\
+0&4&0&3&0\\
+0&0&0&0&2\\
+0&0&0&0&0
+\end{bmatrix},
+\qquad
+ZZ^{\mathsf T}=\operatorname{diag}(25,25,4,0).
+\]
+Its singular values are therefore \(5,5,2,0\). With blocks of two columns,
+the second block lies in the existing span and the last block has one
+column. The untruncated implementation returns the expected spectrum and
+reconstructs \(Z\). Additional checks with block sizes 1, 2, 3 and 5 also
+pass. Singular vectors are not compared entry by entry because signs and
+bases for repeated singular values are not unique.
+
+\textbf{Full video.}
+The batch and untruncated incremental computations both use the same
+\(5184\times92\) matrix. The following dimensionless diagnostics are from a
+verified run. Last digits may vary with floating-point execution \cite{numpy,sep25}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Check & Measured value\\
+\midrule
+\(\norm{Y-U_{\rm inc}\Sigma_{\rm inc}W_{\rm inc}}_F/\norm{Y}_F\)
+& \(8.051\times10^{-15}\)\\
+\(\norm{s_{\rm inc}-s_{\rm batch}}_2/\norm{s_{\rm batch}}_2\)
+& \(8.844\times10^{-16}\)\\
+\(\norm{U_{\rm inc}^{\mathsf T}U_{\rm inc}-I}_F\)
+& \(1.559\times10^{-14}\)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These checks test the reconstructed pixels, singular values, and final
+basis orthogonality separately. All are small enough to support agreement
+within numerical rounding for this experiment. The orthogonality value is
+a final check, rather than a recorded history after every block.
+
+\begin{figure}[h]
+\centering
+\begin{minipage}{0.49\textwidth}
+\includegraphics[width=\linewidth]{report_spectrum.png}
+\end{minipage}\hfill
+\begin{minipage}{0.49\textwidth}
+\includegraphics[width=\linewidth]{report_error.png}
+\end{minipage}
+\caption{Left: the 92 singular values of the prepared video, with a logarithmic
+vertical axis. The batch and untruncated incremental curves overlap.
+Right: whole-video relative Frobenius errors for independently computed
+rank-1, rank-5 and rank-20 approximations. Lines connect the three tested ranks.
+Plots were generated from this experiment using Matplotlib \cite{matplotlib}.}
+\label{fig:curves}
+\end{figure}
+
+The leading singular values fall quickly, followed by a longer tail
+(Figure~\ref{fig:curves}, left). The first mode accounts for about
+\(92.60\%\) of \(\norm{Y}_F^2\). Since the frames are uncentered, this includes
+the common brightness and background as well as the moving subject.
+It is not a measure of how accurately the push-up motion alone is recovered.
+
+\newpage
+\section*{5. Rank comparisons and visible detail}
+
+The rank comparisons are an extension beyond the report's required
+untruncated check and also prepare evidence for the final poster
+\cite{brief}. Each rank uses a separate incremental pass. Table~\ref{tab:errors}
+reports errors over all 92 prepared frames, calculated before any display
+clipping. The batch values also agree with equation~\eqref{eq:tail}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+Rank \(q\) & Batch error & Incremental error & Extra error (percentage points)\\
+\midrule
+1  & \(27.2092\%\) & \(27.2636\%\) & \(0.0544\)\\
+5  & \(9.6202\%\)  & \(9.6810\%\)  & \(0.0608\)\\
+20 & \(4.1284\%\)  & \(4.1651\%\)  & \(0.0367\)\\
+\bottomrule
+\end{tabular}
+\caption{Relative Frobenius errors for the whole prepared video, with block
+size 10. The last column is incremental minus batch error, expressed in
+percentage points. Exact values are saved in \texttt{rank\_comparison.csv}.}
+\label{tab:errors}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.98\textwidth]{report_frames.png}
+\caption{Sampled frame 47 of 92 from the personal recording \cite{video},
+shown with its incremental reconstructions. All panels use the
+same \(96\times54\) image shape and grayscale range 0--255. The error values
+in Table~\ref{tab:errors} concern the entire video, rather than this frame alone.
+The complete batch/incremental image comparison is supplied separately in
+\texttt{frame\_reconstructions.png}. This comparison follows the rank-reconstruction idea in the November~13
+class material \cite{nov13}.}
+\label{fig:frames}
+\end{figure}
+
+For batch rank 1, equation~\eqref{eq:tail} gives
+\(e_1=\sqrt{1-0.925966}\approx0.2721\).
+This connects the captured squared intensity to the measured relative error.
+At rank 1, the fixed room is recognizable, but the arm and body positions are
+smeared together. A large captured-energy percentage therefore does not
+guarantee a clear moving subject. Rank 5 removes much of the visible ghosting,
+and rank 20 brings back more of the edge detail in the selected frame
+(Figure~\ref{fig:frames}).
+
+Incremental error is slightly higher at every tested rank. Repeated
+truncation provides a reason for this gap: a direction that seems weak in an
+early block can be useful later. The small gap in this particular clip
+supports the usefulness of the update, but does not establish the same
+performance for every scene or frame order. The batch approximation remains
+the reference optimum at each rank.
+
+The results concern one short fixed-camera clip, one block size, and three
+truncation ranks. Grayscale conversion, resizing and temporal sampling
+already remove information before SVD. The reported errors measure the
+additional approximation of the prepared matrix, and weight stationary
+pixels along with motion.
+
+\newpage
+\section*{6. Storage, limitations and conclusion}
+
+With singular values stored as a vector, rank-\(q\) factors require
+\(q(N+T+1)=5277q\) numbers \cite{nov13}. Table~\ref{tab:storage} uses float64
+for the factors. The dense float64 matrix occupies \(3{,}815{,}424\) bytes,
+while the prepared uint8 stack occupies \(476{,}928\) bytes.
+\begin{center}
+\begin{tabular}{@{}rrr@{}}
+\toprule
+\(q\) & Factor bytes & Dense float64 bytes / factor bytes\\
+\midrule
+1 & \(42{,}216\) & \(90.38\)\\
+5 & \(211{,}080\) & \(18.08\)\\
+20 & \(844{,}320\) & \(4.52\)\\
+\bottomrule
+\end{tabular}
+\captionof{table}{Factor-storage estimates with a consistent float64
+comparison. At rank 20, the factors exceed the size of the uint8 stack.}
+\label{tab:storage}
+\end{center}
+
+The script preloads \(Y\), retains a frame list, and makes full reconstructions
+for validation. These storage estimates are therefore not measured peak-RAM
+savings. A streaming implementation could retain a spatial basis and an
+incoming block while updating temporal weights, but storing all temporal
+weights still grows with the number of frames \cite{kuhl}. This experiment
+does not compare encoded MOV sizes or establish a speed advantage.
+
+Within the scope of the prepared video, the untruncated update
+reproduces batch SVD to rounding, and rank 20 gives about \(4.17\%\)
+incremental relative error.
+
+\begingroup\small
+\phantomsection\label{sec:class-notes}
+\textbf{Contributions and AI use.}
+I identify myself as the sole student participant. I provided
+the recording, entered and ran early examples, reported output, and reviewed
+the work. The sources I researched helped me supply and edit substantial Python code, performed
+checks, generated the figures, and generated the text and layout.
+The cited class notes and papers support the methods. They are not presented
+as the origin of any AI-written source code.
+\cite{brief};
+\endgroup
+
+\begingroup\small
+\setlength{\parskip}{0pt}
+\begin{thebibliography}{16}
+\setlength{\itemsep}{0pt}
+\bibitem{brief}
+S.~Sayyad. \emph{Compressing a Video with the (Incremental) SVD}.
+MATH 300 project brief, Fall 2026.
+\href{https://github.com/say-yas/wsu_math300/blob/2242bf2f92da2d12b0ac8d933342b008428daaa1/project_proposals/incremental_svd_project.tex}{Official project source}.
+
+\bibitem{video}
+H.~Nizam. Personal push-up video, November 13, 2026.
+\path{20261113_222244000_iOS.MOV}, provided through OneDrive.
+
+\bibitem{kuhl}
+N.~K\"uhl, H.~Fischer, M.~Hinze and T.~Rung (2023).
+\emph{An Incremental Singular Value Decomposition Approach for Large-Scale
+Spatially Parallel \& Distributed but Temporally Serial Data---Applied to
+Technical Flows}. \href{https://arxiv.org/abs/2302.09149v1}{arXiv:2302.09149v1},
+Section 2.2, equations 16--19.
+
+\bibitem{brand}
+M.~Brand (2006). Fast Low-Rank Modifications of the Thin Singular Value
+Decomposition. \emph{Linear Algebra and its Applications} 415, 20--30.
+\href{https://www.merl.com/publications/TR2006-059}{MERL TR2006-059}.
+
+\bibitem{numpy}
+NumPy. Version 2.4.6:
+\href{https://numpy.org/doc/2.4/reference/generated/numpy.linalg.svd.html}{SVD},
+\href{https://numpy.org/doc/2.4/reference/generated/numpy.linalg.qr.html}{QR},
+\href{https://numpy.org/doc/2.4/reference/generated/numpy.ravel.html}{ravel},
+\href{https://numpy.org/doc/2.4/reference/generated/numpy.column_stack.html}{stacking},
+\href{https://numpy.org/doc/2.4/user/basics.broadcasting.html}{broadcasting},
+\href{https://numpy.org/doc/2.4/reference/generated/numpy.linalg.norm.html}{norms},
+\href{https://numpy.org/doc/2.4/reference/generated/numpy.allclose.html}{allclose}.
+
+\bibitem{nov6}
+S.~Sayyad. MATH 300, November 6, 2026.
+\href{https://github.com/say-yas/wsu_math300/blob/ef5f38f850dabb9a1f19068884ba4b0fa7bb2a5b/Nov6_decompositions/decompositions.ipynb}{Matrix decompositions, Part B (QR)}.
+
+\bibitem{nov9}
+S.~Sayyad. MATH 300, November 9, 2026.
+\href{https://github.com/say-yas/wsu_math300/blob/435aab704ac2701d771769e232c75295ec97bba9/Nov9_SVD_similarity_transformations/svd-eigenspaces.ipynb}{SVD and eigenspaces, Part A}.
+
+\bibitem{nov13}
+S.~Sayyad. MATH 300, November 13, 2026.
+\href{https://github.com/say-yas/wsu_math300/blob/2242bf2f92da2d12b0ac8d933342b008428daaa1/Nov13_Imagecompression/svd_image_compression.ipynb}{Image compression with the SVD}.
+
+\bibitem{imageio}
+ImageIO. \href{https://imageio.readthedocs.io/en/stable/_autosummary/imageio.v3.imiter.html}{\code{imageio.v3.imiter}}
+and \href{https://imageio.readthedocs.io/en/stable/_autosummary/imageio.plugins.ffmpeg.html}{FFmpeg plugin}
+documentation. Experiment version 2.37.3.
+
+\bibitem{pillow}
+Pillow. \href{https://pillow.readthedocs.io/en/stable/reference/Image.html}{\code{Image.convert} and \code{Image.resize}}
+documentation. Experiment version 12.3.0.
+
+\bibitem{matplotlib}
+Matplotlib. \href{https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.semilogy.html}{\code{pyplot.semilogy}}
+and \href{https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html}{\code{Axes.imshow}}
+documentation. Experiment version 3.11.0.
+
+\bibitem{overleaf}
+S.~Sayyad. \href{https://www.overleaf.com/project/6a8b1c59a232e8dbbb5b0923}{WSU\_MATH300\_Shared},
+Activities XXX, XXXI and XXXII. Checked November 19, 2026.
+
+\bibitem{sep18}
+S.~Sayyad. MATH 300, September 18, 2026.
+\href{https://github.com/say-yas/wsu_math300/blob/8acbae688a5e5ef588dca37c5ca6f17b00600ac4/Sep18/class_intro_numpy_2.ipynb}{NumPy arrays, shapes, reshaping and matrix products}.
+
+\bibitem{sep25}
+S.~Sayyad. MATH 300, September 25, 2026.
+\href{https://github.com/say-yas/wsu_math300/blob/2e41141c9a3646473619b922458d42a1e5333f66/Sep25/complexity_fp_convergence_practice.ipynb}{Floating-point arithmetic, tolerances and relative error}.
+
+\bibitem{damle}
+A.~Damle. \href{https://www.cs.cornell.edu/courses/cs3220/2020fa/SVD.pdf}{CS 3220: The Singular Value Decomposition}.
+Cornell University, Fall 2020 course (notes undated), pp.~2--3, Theorem~1.
+
+\bibitem{zhang}
+Y.~Zhang (2022). \emph{An answer to an open question in the incremental SVD}.
+\href{https://arxiv.org/abs/2204.05398v2}{arXiv:2204.05398v2}, Section~2, pp.~3--6.
+\end{thebibliography}
+\endgroup
+\end{document}

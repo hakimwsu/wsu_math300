@@ -1,0 +1,118 @@
+Verified sources for the SVD project
+Checked November 20, 2026
+Read with the citation-review copy of the user-supplied draft.
+
+NEW SOURCES INSERTED IN THE REPORT
+
+[13] September 18, 2026 - NumPy arrays and reshaping
+S. Sayyad, MATH 300, class_intro_numpy_2.ipynb.
+https://github.com/say-yas/wsu_math300/blob/8acbae688a5e5ef588dca37c5ca6f17b00600ac4/Sep18/class_intro_numpy_2.ipynb
+Read cells 3 and 10 (zero-based notebook cell indices).
+The notebook prints array shapes, reshapes a vector into a matrix, and demonstrates mat @ vec.
+Citation added to Section 1 at the reshaping operation.
+It supports the operation, not the video's dimensions, decoded frame count, or grayscale conversion. Those come from the experiment and software documentation.
+
+[14] September 25, 2026 - Floating-point arithmetic and tolerances
+S. Sayyad, MATH 300, complexity_fp_convergence_practice.ipynb.
+https://github.com/say-yas/wsu_math300/blob/2e41141c9a3646473619b922458d42a1e5333f66/Sep25/complexity_fp_convergence_practice.ipynb
+Read cells 12 and 14-16 for relative rounding error, tolerance checks, machine epsilon, and rounding.
+Citation added to Section 4's statement that final digits may vary in floating-point execution.
+It supports interpreting numerical differences, not a proof of this implementation or a guaranteed tolerance for every video.
+
+[15] Anil Damle - Cornell CS 3220 SVD notes
+https://www.cs.cornell.edu/courses/cs3220/2020fa/SVD.pdf
+The PDF is undated; it is hosted in the Fall 2020 course directory.
+Page 2, "The SVD as a sum of rank one matrices," writes a matrix as a weighted sum of outer products.
+Page 3, "Best approximation via the SVD," Theorem 1, gives the best low-rank approximation and the discarded-singular-value Frobenius error.
+Citations added to Section 2's weighted-basis interpretation and tail-error formula.
+This batch theorem applies to the original matrix's SVD. It does not turn a repeatedly truncated incremental approximation into the global batch optimum.
+
+[16] Yangwen Zhang (2022) - Numerical orthogonality in incremental SVD
+An answer to an open question in the incremental SVD.
+https://arxiv.org/abs/2204.05398v2
+https://arxiv.org/pdf/2204.05398v2
+Use this pinned version: arXiv version 2 was revised April 30, 2022. A later version has a different title.
+Section 2, pages 3-4, discusses the update through a smaller core; pages 5-6 discuss orthogonality loss and reorthogonalization.
+Citation added to the numerical-stability explanation in Section 3, with a short clause identifying roundoff drift.
+The paper supports the motivation for keeping a basis orthonormal. The report does not claim its expanded-basis QR is Zhang's improved algorithm. The paper's weighted setting specializes to the ordinary inner product when its weight matrix is the identity.
+
+MORE PRECISE EXISTING CLASS REFERENCES
+
+[6] November 6, 2026 - Reduced QR and projections
+https://github.com/say-yas/wsu_math300/blob/ef5f38f850dabb9a1f19068884ba4b0fa7bb2a5b/Nov6_decompositions/decompositions.ipynb
+Part B, cells 20-25, covers reduced QR, removing an existing basis component, and checking Q^T Q.
+The bibliography now links to this companion notebook, which more directly supports Section 3's projection and residual.
+For a tall Q, Q^T Q can be the identity while Q Q^T is a projection rather than the identity.
+
+[7] November 9, 2026 - Reduced SVD and NumPy's Vt convention
+https://github.com/say-yas/wsu_math300/blob/435aab704ac2701d771769e232c75295ec97bba9/Nov9_SVD_similarity_transformations/svd-eigenspaces.ipynb
+Part A, cells 4-9, covers factor dimensions, the vector of singular values, the already-transposed Vt returned by NumPy, and reduced reconstruction.
+The bibliography now links to this more direct companion notebook.
+
+[8] November 13, 2026 - SVD image compression
+https://github.com/say-yas/wsu_math300/blob/2242bf2f92da2d12b0ac8d933342b008428daaa1/Nov13_Imagecompression/svd_image_compression.ipynb
+Existing reference retained for image reconstruction, retained rank, and compression/error interpretation.
+Repeated Overleaf activity descriptions were removed from individual entries because the shared Overleaf source remains listed separately.
+
+Dates above are lesson dates, not publication dates inferred from UTC commits.
+The public repository was checked at current commit 88ce58e60f68ef80cc325f30457ca4908ea480a7.
+Links pin the relevant historical files so later repository changes do not silently change the citation.
+
+OPTIONAL READING - NOT ADDED TO THE REPORT BIBLIOGRAPHY
+
+Gilbert Strang, MIT 18.065, Lecture 6: Singular Value Decomposition (SVD), Spring 2018.
+https://ocw.mit.edu/courses/18-065-matrix-methods-in-data-analysis-signal-processing-and-machine-learning-spring-2018/resources/lecture-6-singular-value-decomposition-svd/
+Start with the Description and Summary. The lecture explains rank-one pieces ordered by importance and orthonormal singular-vector bases.
+Useful for explaining basis patterns and singular values aloud. No exact publication day is claimed.
+
+Hiba Fareed and John R. Singler, Error Analysis of an Incremental POD Algorithm for PDE Simulation Data, 2018 preprint.
+https://arxiv.org/abs/1803.06313v1
+https://arxiv.org/pdf/1803.06313v1
+Section 3.2, Theorem 2 on page 9 and Corollary 1 on page 10, provides context for accumulated truncation error.
+This is optional advanced reading. Its operator-norm bounds for a one-column, tolerance-based weighted algorithm are not direct bounds for this project's blockwise fixed-rank Frobenius errors.
+
+READING ORDER FOR UNDERSTANDING
+
+1. September 18: array shapes and matrix multiplication.
+2. MIT Lecture 6: what the SVD components mean.
+3. Cornell pages 2-3: weighted components and the batch error formula.
+4. November 6 and November 9: projection, QR, reduced factors and reconstruction.
+5. September 25: why floating-point tests use tolerances.
+6. Zhang Section 2: numerical stability motivation, if asked in the oral exam.
+The Fareed-Singler paper can remain optional.
+
+Source citations document concepts and software operations. They do not establish who wrote project code or generated figures and report text.
+
+FUNCTION-LEVEL CODE DOCUMENTATION ADDED NOVEMBER 20
+
+Reference [5] now includes the following official NumPy 2.4 documentation.
+The version branch matches the experiment's installed NumPy 2.4.6.
+These links extend an existing reference; the bibliography still has 16 entries.
+
+ravel - line 18, flattening one frame with consistent pixel ordering:
+https://numpy.org/doc/2.4/reference/generated/numpy.ravel.html
+
+column_stack - line 23, placing frame vectors into columns of Y:
+https://numpy.org/doc/2.4/reference/generated/numpy.column_stack.html
+
+Broadcasting - lines 57, 121, 124, 160 and 162, scaling each U column by its singular value:
+https://numpy.org/doc/2.4/user/basics.broadcasting.html
+
+linalg.norm - lines 126-128 and 163-165, matrix and vector error measurements:
+https://numpy.org/doc/2.4/reference/generated/numpy.linalg.norm.html
+
+allclose - lines 40, 50, 59, 119 and 122, comparisons within tolerances:
+https://numpy.org/doc/2.4/reference/generated/numpy.allclose.html
+
+SVD and QR are also linked using the NumPy 2.4 documentation branch:
+https://numpy.org/doc/2.4/reference/generated/numpy.linalg.svd.html
+https://numpy.org/doc/2.4/reference/generated/numpy.linalg.qr.html
+
+For exporting plots, this additional official Matplotlib page supports
+figure.savefig at line 223; reference [11] already identifies Matplotlib:
+https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.savefig.html
+The stable manual currently describes Matplotlib 3.11.2; the experiment ran
+3.11.0. This is a documentation reference, not a change of experimental version.
+
+CODE_AND_SOURCE_MAP.txt provides all 16 source mappings, report sections,
+code line numbers, explanations and limits of each reference.

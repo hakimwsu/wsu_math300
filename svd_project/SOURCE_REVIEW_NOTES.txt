@@ -1,0 +1,12 @@
+Publication scope, November 20, 2026
+
+The report source is the latest LaTeX supplied by Hakim. Its wording was
+preserved, and the matching PDF was rebuilt from that source.
+
+The README and AI_USE_RECORD.txt separately record the actual assistance
+provided in this chat. Mathematical and software references support the
+methods; they do not replace the account of code, figure and text authorship.
+
+The project includes the prepared frame matrix, tested code, dependencies,
+figures, measured results, source mappings and run instructions.
+No older SVD report versions are included in this project folder.

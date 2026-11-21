@@ -1,0 +1,6 @@
+numpy==2.4.6
+matplotlib==3.11.0
+imageio==2.37.3
+imageio-ffmpeg==0.8.1
+Pillow==12.3.0
+threadpoolctl==3.5.0

@@ -1,0 +1,191 @@
+Code and source map - MATH 300 SVD project
+Checked November 20, 2026
+
+Read this alongside svd_project_source_review.pdf and work/practice.py.
+Line numbers refer to the current 228-line practice.py and may move after edits.
+The report contains in-text citation numbers. This guide adds the code locations
+and explains what each source actually supports.
+
+THE PROJECT'S SEQUENCE
+
+A. Lines 10-23: read frames, prepare grayscale images, and assemble Y.
+B. Line 24: compute the batch SVD of all prepared frames.
+C. Lines 28-59: demonstrate an update using just the first twenty frame columns.
+D. Lines 61-103: define the reusable incremental update, including second QR.
+E. Lines 106-133: run the full update and check a known matrix and the video.
+F. Lines 150-177: compare independent rank-1, rank-5 and rank-20 runs.
+G. Lines 139-148 and 188-228: plot and export the results.
+
+In the teaching demonstration, the name U20 refers to factors after processing
+the FIRST TWENTY FRAMES. The later q=20 experiment retains up to TWENTY BASIS
+IMAGES while processing ALL NINETY-TWO FRAMES. The identical number 20 has
+different roles in these two parts of the script.
+
+EVERY REFERENCE AND WHERE IT IS USED
+
+[1] Professor's project brief - course instructions
+Report: Section 1, Approach A; Section 5, report/poster scope.
+Code: the cap of 100 retained frames at lines 19-20 and the validation experiments
+respond to assignment requirements.
+It explains what is required. It is not a source of this recording's measured
+results or the literal implementation.
+
+[2] Hakim's video - experimental data
+Report: Section 1's data description and Section 5's frame-comparison caption.
+Code: video_path at line 5 and the reading loop at lines 10-21.
+The 184 decoded frames, 92 retained frames and prepared pixel values come from
+the actual run. External documentation does not independently establish these
+measurements.
+
+[3] Kuhl, Fischer, Hinze and Rung (2023) - block-update method
+Report: Sections 1 and 3; Section 6's discussion of storage over time.
+Code: incremental_svd, lines 61-103, especially projection, the residual,
+small core and factor updates.
+Section 2.2, equations 16-19, is the main methodological connection: combine
+the old factorization with an incoming column block and solve a smaller SVD
+problem. The project adapts the mathematical idea to its own prepared video.
+
+[4] Brand (2006) - thin-SVD update identities
+Report: Section 3's small-coordinate update identity.
+Code: lines 42-55 in the demonstration and 86-100 in the reusable update.
+This is additional mathematical support for updating a thin SVD instead of
+refactoring the whole original matrix after every new block.
+
+[5] NumPy documentation - actual array and linear-algebra calls
+Report: Sections 1-4 at the array, SVD, QR, weighting and numerical-check steps.
+Code:
+- line 18, ravel(): one image becomes a one-dimensional pixel vector.
+- line 23, column_stack(): frame vectors become the columns of Y.
+- line 24 and lines 75-77, linalg.svd(): return U, singular-value vector s, vt.
+- lines 38, 84 and 92-94, linalg.qr(): factor residuals and the expanded basis.
+- lines 57, 121, 124, 160 and 162, U*s: broadcasting scales U column i by s_i.
+  Multiplication by vt then combines those patterns into reconstructed frames.
+- lines 126-128 and 163-165, linalg.norm(): measure matrix/vector differences.
+  With these default arguments, matrix errors use the Frobenius norm;
+  singular-value vectors use the ordinary Euclidean norm.
+- lines 40, 50, 59, 119 and 122, allclose(): compare within tolerances.
+- lines 170-174, array nbytes and dtype sizes: report stored array bytes.
+Reference [5] now directly links SVD, QR, ravel, column_stack, broadcasting,
+norm and allclose in the NumPy 2.4 manual. NumPy 2.4.6 was used for the run.
+
+An allclose result of True means differences satisfy its tolerance rule.
+The default comparisons here use rtol=1e-5 and atol=1e-8:
+    abs(a-b) <= 1e-8 + 1e-5*abs(b)
+That is different from proving zero error or agreement to machine epsilon.
+The aggregate errors printed at lines 126-133 separately quantify agreement.
+The tail-error assertion at line 166 explicitly uses rtol=1e-10, atol=1e-12.
+
+[6] November 6 class notes - projection and reduced QR
+Report: Section 3, projection/residual and QR explanation.
+Code: lines 33-38 and 82-84, with QR also used at 92-94.
+The notes explain removing an already represented component and using
+perpendicular basis directions. In the project, M=U.T@B gives coefficients in
+the existing basis; U@M is the explained part; P=B-U@M is the leftover.
+The class QR lesson is background for the update, not a claim that the lesson
+contains the entire incremental video algorithm.
+
+[7] November 9 class notes - SVD factors and NumPy convention
+Report: Section 2's reduced-SVD factor explanation.
+Code: line 24, line 32, and lines 75-77.
+The notes explain that NumPy returns the singular values as a vector and
+returns vt already transposed. With the full prepared video:
+    U: 5184 by 92; s: length 92; vt: 92 by 92.
+full_matrices=False chooses reduced factor sizes. It still retains all
+available singular components; the later q slicing performs truncation.
+
+[8] November 13 class notes - low-rank image approximation
+Report: Section 2's error formula; Section 5's image comparisons; Section 6's
+factor-storage formula.
+Code: lines 159-177, plus the plots and image reconstructions.
+The lesson keeps leading SVD components, reconstructs an image, and studies
+error and storage. The project applies those matrix ideas to a VIDEO MATRIX
+whose columns are frames. Every retained rank reconstructs all 92 frames.
+A rank q uses q shared basis images and q weights for each frame.
+The code's broadcasting form implements the same scaling as U@diag(s)@vt.
+
+[9] ImageIO documentation - decoding the video
+Report: Section 1's video-reading step.
+Code: line 10, iio.imiter(video_path, plugin="FFMPEG"), and the iteration.
+The API documentation explains how frames are yielded. The actual decoded
+count is measured by the run, rather than taken from the API documentation.
+Python's index%2 condition at line 13 keeps alternate decoded frames.
+
+[10] Pillow documentation - preparing each image
+Report: Section 1's grayscale conversion and resizing.
+Code: lines 14-16, fromarray, convert("L"), resize((54,96)).
+Line 17 then converts the result to a NumPy array, using NumPy rather than Pillow.
+"L" gives a grayscale image. The resize tuple is WIDTH then HEIGHT.
+The resulting NumPy pixel array therefore has 96 rows and 54 columns.
+Pillow documents the image operations; the chosen dimensions belong to this
+experiment.
+
+[11] Matplotlib documentation - making the graphs and image panels
+Report: Section 4's curve caption; figures throughout.
+Code: lines 142-148, 188-197, 200-216 and 218-223.
+semilogy displays singular values with a logarithmic vertical axis.
+plot displays reconstruction error against retained rank.
+imshow displays the original and reconstructed pixel arrays.
+figure.savefig writes the figure files.
+Shared display limits 0-255 affect the image view. Numerical errors are
+calculated earlier on the floating-point reconstruction, before clipping.
+
+[12] Shared Overleaf class materials - supporting course activities
+Report: Section 3's QR/background citation and the bibliography.
+Code connection: supports the same course ideas described in [6]-[8].
+Activities XXX, XXXI and XXXII align with the November 6, 9 and 13 lessons.
+Overleaf is another location for course material, not an additional algorithm
+that the code executes.
+
+[13] September 18 class notes - arrays, shape and reshaping
+Report: Section 1, at the flattening explanation.
+Code: conceptual background for lines 17-23 and 176-177.
+The notebook demonstrates array shapes, reshape and matrix multiplication.
+It does not demonstrate video decoding or Pillow, and it does not specifically
+teach ravel(). NumPy documentation [5] supports that exact function.
+Flattening changes the organization of the 5,184 pixel values. Stacking the
+resulting vectors places each frame in one column of Y.
+
+[14] September 25 class notes - floating-point error and tolerance
+Report: Section 4, interpreting very small numerical differences.
+Code: tolerance comparisons and the norm diagnostics described under [5].
+The class examples show rounding and tolerance comparisons. The specific
+NumPy allclose defaults come from the API documentation, not from that lesson.
+Small floating-point differences can occur even when two methods represent
+the same mathematical matrix.
+
+[15] Damle's Cornell notes - weighted components and the best batch rank q
+Report: Section 2, weights and the discarded-singular-value error formula.
+Code: line 160 for batch rank-q reconstruction and line 165 for its tail error.
+Page 2 writes SVD as a sum of weighted rank-one terms. For frame j, the weight
+on basis image i is s_i*vt[i,j].
+Page 3's theorem gives the best low-rank batch approximation and its
+Frobenius error from the omitted singular values.
+This theorem does not make repeated incremental truncation globally optimal
+for the original, uncompressed matrix.
+
+[16] Zhang (2022), pinned version 2 - orthogonality and stability motivation
+Report: Section 3's explanation of reorthogonalization and roundoff drift.
+Code connection: lines 92-95 restore an orthonormal expanded basis before the
+small SVD. Multiplying basis_R into K preserves the represented matrix.
+The paper discusses the importance of orthogonality in incremental SVD.
+The project is not described as implementing Zhang's modified algorithm;
+this reference supports the stability motivation.
+
+THE MOST IMPORTANT DISTINCTION
+
+Class notes provide course concepts.
+Research papers support the mathematical algorithm and analysis.
+Official documentation explains library behavior.
+The recording and actual program runs supply the experimental evidence.
+These are method and software references. Literal code authorship and the
+history of assistance are separate facts, recorded in AI_USE_RECORD.txt.
+
+For direct URLs, lesson dates and recommended reading locations, see
+VERIFIED_SOURCES.txt. Sources found after implementation are supporting
+references; they should not be described as the original source of code
+that was already written.
+
+REPOSITORY INPUT NOTE
+The portable repository version keeps the same 228 line numbers.
+Lines 5, 10, 21 and 23 accept an optional raw video path; without one,
+line 23 loads data/prepared_frames.npy. The SVD algorithm is unchanged.
